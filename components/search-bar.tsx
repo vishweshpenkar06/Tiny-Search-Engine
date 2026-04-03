@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Search, X } from 'lucide-react'
+import { Search, X, Command } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts'
 
 interface SearchBarProps {
   value: string
@@ -23,14 +24,14 @@ export function SearchBar({
   isLoading = false,
   className,
 }: SearchBarProps) {
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useKeyboardShortcuts()
   const [isFocused, setIsFocused] = useState(false)
 
   useEffect(() => {
     if (autoFocus && inputRef.current) {
       inputRef.current.focus()
     }
-  }, [autoFocus])
+  }, [autoFocus, inputRef])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -78,6 +79,13 @@ export function SearchBar({
           >
             <X className="h-4 w-4" />
           </button>
+        )}
+
+        {!isFocused && !value && (
+          <div className="mr-3 flex items-center rounded border border-border bg-muted/50 px-1.5 py-0.5 text-xs text-muted-foreground">
+            <Command className="mr-1 h-3 w-3" />
+            <span>K</span>
+          </div>
         )}
 
         {isLoading && (

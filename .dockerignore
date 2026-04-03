@@ -1,0 +1,47 @@
+# ---- Next.js Build Artifacts ----
+.next
+out
+
+# ---- Node Modules ----
+node_modules
+
+# ---- Python Runtime (Backend) ----
+backend/venv
+backend/__pycache__
+backend/**/__pycache__
+backend/**/*.pyc
+backend/**/*.pyo
+backend/uploads/*
+backend/index_store/*
+
+# ---- Environment Files (contain secrets) ----
+.env
+.env.local
+.env.*.local
+
+# ---- Git ----
+.git
+.gitignore
+
+# ---- Dev Tools ----
+.vscode
+.idea
+*.swp
+*.swo
+
+# ---- OS Files ----
+.DS_Store
+Thumbs.db
+
+# ---- Logs ----
+*.log
+npm-debug.log*
+
+# ---- Tests ----
+coverage
+.pytest_cache
+
+# ---- Documentation (not needed in image) ----
+docs
+*.md
+!README.md

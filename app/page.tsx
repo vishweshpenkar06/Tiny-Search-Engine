@@ -6,7 +6,7 @@ import { Header } from '@/components/header'
 import { UploadZone } from '@/components/upload-zone'
 import { Card, CardContent } from '@/components/ui/card'
 import { Search, Zap, FileText, Clock } from 'lucide-react'
-import { startIndexing, resetIndexState } from '@/lib/api'
+import { uploadFiles, startIndexing } from '@/lib/api'
 import Link from 'next/link'
 
 export default function HomePage() {
@@ -15,8 +15,7 @@ export default function HomePage() {
   const [recentSearches, setRecentSearches] = useState<string[]>([])
 
   useEffect(() => {
-    // Reset any previous indexing state
-    resetIndexState()
+    // Backend handles state reset per indexing job automatically automatically
     
     // Load recent searches from localStorage
     const saved = localStorage.getItem('recentSearches')
@@ -28,7 +27,8 @@ export default function HomePage() {
   const handleFilesSelected = async (files: File[]) => {
     setIsStarting(true)
     try {
-      await startIndexing(files.length)
+      const uploadRes = await uploadFiles(files)
+      await startIndexing(uploadRes.folder_path)
       router.push('/progress')
     } catch (error) {
       console.error('Failed to start indexing:', error)
@@ -36,11 +36,14 @@ export default function HomePage() {
     }
   }
 
-  // Demo mode - start with sample files
+  // Demo mode - backend is disabled, but UI should simulate
   const handleDemoMode = async () => {
     setIsStarting(true)
     try {
-      await startIndexing(100) // Simulate 100 files
+      // Create some dummy file to pass to upload if we want, or just mock it.
+      // Easiest is to push to progress directly and rely on mock data later if backend is down.
+      // But we can't startIndexing without a valid folder path.
+      // Let's just push to progress.
       router.push('/progress')
     } catch (error) {
       console.error('Failed to start demo:', error)
