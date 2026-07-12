@@ -115,6 +115,11 @@ export async function search(
 }
 
 export async function uploadFiles(files: File[]): Promise<{ folder_path: string, file_count: number }> {
+    const isBackendHealthy = await checkBackendHealth()
+    if (!isBackendHealthy) {
+        throw new Error('Backend is offline. Please start the Python Flask server on port 5000.')
+    }
+
     const formData = new FormData()
     files.forEach(file => {
         formData.append('files', file)
@@ -138,6 +143,11 @@ export async function uploadFiles(files: File[]): Promise<{ folder_path: string,
 }
 
 export async function startIndexing(folderPath: string): Promise<IndexResponse> {
+  const isBackendHealthy = await checkBackendHealth()
+  if (!isBackendHealthy) {
+    throw new Error('Backend is offline. Please start the Python Flask server on port 5000.')
+  }
+
   const response = await fetch(`${API_URL}/api/index`, {
     method: 'POST',
     headers: {

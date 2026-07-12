@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Header } from '@/components/header'
 import { UploadZone } from '@/components/upload-zone'
 import { Card, CardContent } from '@/components/ui/card'
-import { Search, Zap, FileText, Clock } from 'lucide-react'
+import { Search, Zap, FileText, Clock, AlertCircle } from 'lucide-react'
 import { uploadFiles, startIndexing } from '@/lib/api'
 import Link from 'next/link'
 
@@ -13,11 +13,9 @@ export default function HomePage() {
   const router = useRouter()
   const [isStarting, setIsStarting] = useState(false)
   const [recentSearches, setRecentSearches] = useState<string[]>([])
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Backend handles state reset per indexing job automatically automatically
-    
-    // Load recent searches from localStorage
     const saved = localStorage.getItem('recentSearches')
     if (saved) {
       setRecentSearches(JSON.parse(saved))
@@ -26,12 +24,14 @@ export default function HomePage() {
 
   const handleFilesSelected = async (files: File[]) => {
     setIsStarting(true)
+    setError(null)
     try {
       const uploadRes = await uploadFiles(files)
       await startIndexing(uploadRes.folder_path)
       router.push('/progress')
-    } catch (error) {
-      console.error('Failed to start indexing:', error)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to start indexing'
+      setError(msg)
       setIsStarting(false)
     }
   }
@@ -69,6 +69,21 @@ export default function HomePage() {
 
         {/* Upload Section */}
         <div className="mx-auto max-w-2xl">
+          {error && (
+            <div className="mb-4 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900/50 dark:bg-red-900/10">
+              <AlertCircle className="h-5 w-5 shrink-0 text-red-600 mt-0.5 dark:text-red-500" />
+              <div>
+                <p className="text-sm font-medium text-red-900 dark:text-red-400">{error}</p>
+                <button
+                  onClick={() => setError(null)}
+                  className="mt-1 text-xs text-red-700 underline hover:text-red-900 dark:text-red-300"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          )}
+
           <UploadZone 
             onFilesSelected={handleFilesSelected}
             isUploading={isStarting}
