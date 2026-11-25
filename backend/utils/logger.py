@@ -1,23 +1,39 @@
+import json
 import logging
 import sys
+from datetime import datetime, timezone
+from typing import Any
 
-def setup_logger():
-    """Configure basic logging for the application."""
-    logger = logging.getLogger('search_engine')
+
+class JsonFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord) -> str:
+        payload: dict[str, Any] = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+        }
+        context = getattr(record, "context", None)
+        if isinstance(context, dict):
+            payload.update(context)
+        if record.exc_info:
+            payload["exception"] = self.formatException(record.exc_info)
+        return json.dumps(payload, ensure_ascii=False)
+
+
+def setup_logger() -> logging.Logger:
+    logger = logging.getLogger("tiny_search")
     logger.setLevel(logging.INFO)
-    
-    # Create console handler
-    ch = logging.StreamHandler(sys.stdout)
-    ch.setLevel(logging.INFO)
-    
-    # Create formatter
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    ch.setFormatter(formatter)
-    
-    # Add handler to logger
-    if not logger.handlers:
-        logger.addHandler(ch)
-        
+    logger.handlers.clear()
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(JsonFormatter())
+    logger.addHandler(handler)
+    logger.propagate = False
     return logger
 
+
 logger = setup_logger()
+
+
+def log(level: int, message: str, **context: Any) -> None:
+    logger.log(level, message, extra={"context": context})

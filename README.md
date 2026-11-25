@@ -1,131 +1,95 @@
-# 🔍 Tiny Search Engine
+# Tiny Search Engine
 
-A **production-ready, full-stack search engine** built from scratch — no Elasticsearch, no cloud search APIs. Just pure algorithms, data structures, and modern web engineering.
+A small full-stack search engine built without Elasticsearch or a hosted search API. The backend implements the index and ranking in Python; the frontend is Next.js and talks to it through a browser-relative `/api/*` proxy.
 
-![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)
-![Flask](https://img.shields.io/badge/Flask-3.0-blue?logo=flask)
-![Python](https://img.shields.io/badge/Python-3.10+-green?logo=python)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
-![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker)
+## What is implemented
 
----
+- Backend API matching `docs/API.md`: health, readiness, config, upload, index jobs, search, document retrieval and opt-in crawling.
+- HTTP Basic auth on API routes, with `Origin` checks on mutations when auth is enabled.
+- Streaming uploads with per-file limits, rejection lists and opaque UUID batch ids.
+- Typed search options: `tfidf` or `bm25` ranking, `lexical`, `semantic` or `hybrid` mode, fuzzy flag, threshold, pagination, sort and filters.
+- SQLite-backed index service with generations and job tracking.
+- Deterministic evaluation fixtures and a benchmark generator.
+- Docker Compose deployment with one published port and a durable data volume.
 
-## ✨ Features
+Ranking quality numbers are reported in `eval/BASELINE.md` and `eval/RESULTS.md`. No improvement over TF-IDF is claimed without a measured row there.
 
-### Search Engine Core (Backend)
-- **TF-IDF Ranking** — Term Frequency × Inverse Document Frequency scoring
-- **Inverted Index** — O(1) term lookups with position tracking
-- **Phrase Search** — `"exact phrase"` matching using positional data
-- **Multi-Format Parsing** — `.txt`, `.md`, `.html`, `.csv` files
-- **Stop-Word Removal & Tokenization** — Smart preprocessing pipeline
+## Quick start
 
-### Frontend
-- **Real-Time Search** — 500ms debounced queries with skeleton loading states
-- **Result Highlighting** — Query terms highlighted in snippets
-- **Sort & Filter** — By relevance, filename, or file size; min-relevance slider
-- **Pagination** — Load 10 results at a time with "Load More"
-- **Export** — Download results as JSON or CSV
-- **Keyboard Shortcuts** — `⌘K` / `Ctrl+K` to focus search instantly
-- **Copy Path** — One-click path copying on any result
-
-### Production Engineering
-- **Security Headers** — CSP, X-Frame-Options, HSTS, Referrer-Policy
-- **Input Sanitization** — Client + server-side validation
-- **Error Boundaries** — Graceful degradation on API failures
-- **Mock Fallback** — UI stays usable even when backend is offline
-- **Docker** — Single `docker compose up` deploys everything
-- **Health Checks** — Both services monitored by Docker
-
----
-
-## 🚀 Quick Start
-
-```bash
-# Docker (recommended)
+```
 docker compose up --build
-# → http://localhost:3000
-
-# Manual development
-# Terminal 1 — Backend
-cd backend && pip install -r requirements.txt && python app.py
-
-# Terminal 2 — Frontend
-npm install && npm run dev
 ```
 
-See **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** for full setup instructions.
+Open `http://localhost:3000`. The backend is intentionally not published on the host.
 
----
-
-## 📁 Project Structure
+For local development:
 
 ```
-Tiny Search Engine AG/
-├── app/                    # Next.js App Router pages
-│   ├── page.tsx            # Home (upload)
-│   ├── progress/page.tsx   # Indexing progress
-│   └── search/page.tsx     # Search results
-├── backend/                # Flask API
-│   ├── app.py              # Entry point & routes
-│   ├── core/               # Search engine algorithms
-│   │   ├── search_engine.py  # TF-IDF + inverted index
-│   │   ├── tokenizer.py      # Text preprocessing
-│   │   └── file_parser.py    # Multi-format file parsing
-│   └── utils/              # Helpers (validation, logging, errors)
-├── components/             # Reusable React components
-├── hooks/                  # Custom React hooks
-├── lib/                    # API client, types, utilities
-├── docs/                   # Documentation
-├── Dockerfile              # Frontend container
-├── backend/Dockerfile      # Backend container
-└── docker-compose.yml      # Orchestration
+cd backend && python3 -m pip install -r requirements.txt && python3 app.py
+npm ci && npm run dev
 ```
 
----
+## API
 
-## 🧠 How It Works
+The authoritative contract is `docs/API.md`. Success responses are the resource object plus `request_id`. Errors are `{"error": {"code", "message"}, "request_id"}`. `generation` is monotonic and clients should key caches by it.
 
-1. **Upload** — Drop `.txt`, `.md`, `.html`, or `.csv` files onto the upload zone
-2. **Index** — The Flask backend tokenizes, removes stop words, and builds an inverted index with TF-IDF weights
-3. **Search** — Queries are tokenized the same way; results scored by TF-IDF and ranked; phrase positions verified for exact matches
-4. **Display** — Top results shown with highlighted snippets, relevance scores, and metadata
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/api/health`, `/livez`, `/readyz` | Liveness and readiness |
+| `GET` | `/api/config` | Public limits and capabilities |
+| `POST` | `/api/upload` | Stream files to a UUID batch |
+| `POST` | `/api/index` | Start an indexing job |
+| `GET` | `/api/index/status?job_id=...` | Job progress |
+| `POST` | `/api/index/jobs/<id>/cancel` | Cancel a job |
+| `POST` | `/api/search` | Search the active generation |
+| `GET` | `/api/documents/<id>` | Retrieve one document as plain text |
+| `POST` | `/api/crawl` | Start a crawl when enabled |
 
-### TF-IDF Formula
+`/api/index/cancel` remains as a compatibility alias that cancels the most recent job started through this process.
+
+## Verification
 
 ```
-TF(term, doc) = count(term in doc) / total_words(doc)
-IDF(term)     = log(total_docs / docs_containing_term)
-Score         = TF × IDF
+python3 -m compileall -q backend eval benchmarks
+cd backend && python3 -m unittest discover -s tests -v
+python3 eval/run_eval.py
+npm ci && npm run typecheck && npm run build
+docker compose config -q
 ```
 
----
+`npm run test` runs the same backend unittest suite from the repository root.
 
-## 🛠️ Tech Stack
+## Structure
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | Next.js 16, React 19, TypeScript, Tailwind CSS 4 |
-| UI Components | shadcn/ui, Lucide Icons |
-| Backend | Python 3.10+, Flask 3, Flask-CORS |
-| Search Algorithms | Custom TF-IDF, Inverted Index, Tokenizer |
-| Validation | Zod (frontend), custom validators (backend) |
-| Deployment | Docker, Docker Compose |
+```
+app/                  Next.js routes
+components/           UI components
+hooks/, lib/          Client hooks and API helpers
+backend/app.py        HTTP layer and app factory
+backend/config.py     Environment configuration
+backend/core/         Index service, store, parser, tokenizer, ranking
+backend/crawler/      Polite crawler
+backend/tests/        API tests
+eval/                 Queries, fixtures, metric harness, baseline and results
+benchmarks/           Corpus generator and benchmark runner
+docs/                 API, architecture, deployment and changelog
+```
 
----
+## Notes and limits
 
-## 📊 API Endpoints
+- One gunicorn worker is intentional: generation state is held in that process. Run a single backend replica.
+- Semantic and hybrid modes need a local embeddings module and model; lexical modes work without one.
+- The crawler is disabled unless `ENABLE_CRAWLER=true` and should only be pointed at sites you are allowed to fetch.
+- The evaluation set is a CI smoke fixture, not a production quality signal.
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/health` | Health check |
-| `POST` | `/api/upload` | Upload files for indexing |
-| `POST` | `/api/index` | Start indexing a folder |
-| `GET` | `/api/index/status` | Get indexing progress |
-| `DELETE` | `/api/index/cancel` | Cancel ongoing indexing |
-| `GET` | `/api/search?q=...` | Search the index |
+## Documentation
 
----
+- `docs/API.md` — HTTP contract
+- `docs/ARCHITECTURE.md` — components and request lifecycle
+- `docs/DEPLOYMENT.md` — configuration and operations
+- `docs/CHANGELOG-IMPROVE.md` — improvement workstream
+- `SECURITY.md` — reporting and hardening notes
 
-## 📄 License
+## License
 
-MIT — built for learning and demonstration purposes.
+MIT. See `LICENSE`.

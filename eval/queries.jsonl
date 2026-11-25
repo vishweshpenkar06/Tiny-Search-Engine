@@ -1,0 +1,12 @@
+{"id": "q01", "topic": "python", "query": "python list comprehension", "relevant": [{"doc_id": "py-01", "grade": 3}, {"doc_id": "py-04", "grade": 1}]}
+{"id": "q02", "topic": "python", "query": "python generator memory", "relevant": [{"doc_id": "py-02", "grade": 3}, {"doc_id": "py-01", "grade": 1}]}
+{"id": "q03", "topic": "python", "query": "context manager file handling", "relevant": [{"doc_id": "py-03", "grade": 3}]}
+{"id": "q04", "topic": "databases", "query": "sqlite index query", "relevant": [{"doc_id": "db-01", "grade": 3}, {"doc_id": "db-04", "grade": 1}]}
+{"id": "q05", "topic": "databases", "query": "database transaction rollback", "relevant": [{"doc_id": "db-02", "grade": 3}, {"doc_id": "db-03", "grade": 1}]}
+{"id": "q06", "topic": "databases", "query": "normalize relational tables", "relevant": [{"doc_id": "db-03", "grade": 3}]}
+{"id": "q07", "topic": "networking", "query": "tcp congestion control", "relevant": [{"doc_id": "net-01", "grade": 3}, {"doc_id": "net-04", "grade": 1}]}
+{"id": "q08", "topic": "networking", "query": "dns resolution caching", "relevant": [{"doc_id": "net-02", "grade": 3}]}
+{"id": "q09", "topic": "networking", "query": "http status codes", "relevant": [{"doc_id": "net-03", "grade": 3}]}
+{"id": "q10", "topic": "algorithms", "query": "binary search complexity", "relevant": [{"doc_id": "algo-01", "grade": 3}, {"doc_id": "algo-04", "grade": 1}]}
+{"id": "q11", "topic": "algorithms", "query": "graph traversal breadth first", "relevant": [{"doc_id": "algo-02", "grade": 3}, {"doc_id": "algo-03", "grade": 1}]}
+{"id": "q12", "topic": "operations", "query": "docker multi stage build", "relevant": [{"doc_id": "ops-01", "grade": 3}, {"doc_id": "ops-02", "grade": 1}]}

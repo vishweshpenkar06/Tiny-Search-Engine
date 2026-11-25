@@ -1,4 +1,6 @@
 # ---- Frontend Dockerfile ----
+ARG BACKEND_ORIGIN=http://backend:5000
+
 FROM node:20-alpine AS base
 
 # Install dependencies only when needed
@@ -23,8 +25,10 @@ RUN npm run build
 FROM base AS runner
 WORKDIR /app
 
+ARG BACKEND_ORIGIN
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV BACKEND_ORIGIN=${BACKEND_ORIGIN}
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs

@@ -7,19 +7,26 @@ __v0_jsx-dev-runtime.ts
 .vercel/
 next.user-config.*
 
-# Environment variables
+.env
 .env*.local
 
-# Common ignores
 node_modules
 .next/
+out/
 .DS_Store
 
-# Python ignores
 __pycache__/
 *.py[cod]
 *$py.class
-.env
+.pytest_cache/
+.coverage
+*.db
+backend/data/
+backend/uploads/
+backend/index_store/
+benchmarks/data/
+eval/results/
+
 .venv
 env/
 venv/
@@ -27,6 +34,7 @@ ENV/
 env.bak/
 venv.bak/
 
-# IDE ignores
 .vscode/
 .idea/
+.serena/
+tsconfig.tsbuildinfo

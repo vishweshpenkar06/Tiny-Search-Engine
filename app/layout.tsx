@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next'
 import { Plus_Jakarta_Sans, Fira_Code } from 'next/font/google'
-import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
 const plusJakartaSans = Plus_Jakarta_Sans({ 
@@ -54,7 +53,6 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${plusJakartaSans.variable} ${firaCode.variable} font-sans antialiased`}>
         {children}
-        <Analytics />
       </body>
     </html>
   )
