@@ -18,14 +18,15 @@ Live queries explicitly send `fuzzy: false` for controlled ranking comparisons. 
 | static TF-IDF baseline | all | 0.7817 | 1.0000 | 0.7836 | 0.085 | 0.110 |
 | live TF-IDF, 100 docs | test | 0.9032 | 1.0000 | 0.7315 | 2.032 | 4.968 |
 | live BM25, 100 docs | test | 0.8224 | 1.0000 | 0.7315 | 2.238 | 5.904 |
-| live semantic, BGE small | dev | 0.7853 | 0.9667 | 0.7434 | 25.562 | 38.153 |
-| live hybrid, RRF k=60 | dev | 0.8012 | 1.0000 | 0.7468 | 11.956 | 39.967 |
-| live hybrid, RRF k=10 | dev | 0.8145 | 1.0000 | 0.7577 | 24.728 | 36.183 |
-| live semantic, BGE small | test | 0.7399 | 0.9556 | 0.6994 | 14.557 | 18.610 |
-| live hybrid, RRF k=10 | test | 0.8163 | 1.0000 | 0.7376 | 41.825 | 614.968 |
+| live semantic, BGE small, corrected passage encoding | dev | 0.7853 | 0.9667 | 0.7434 | 13.957 | 40.744 |
+| live hybrid, RRF k=60, corrected passage encoding | dev | 0.8012 | 1.0000 | 0.7468 | 16.916 | 43.862 |
+| live hybrid, RRF k=10, pre-fix vectors | dev | 0.8145 | 1.0000 | 0.7577 | 24.728 | 36.183 |
+| live semantic, BGE small, corrected passage encoding | test | 0.7399 | 0.9556 | 0.6994 | 12.706 | 22.646 |
+| live hybrid, RRF k=10, pre-fix vectors | test | 0.8163 | 1.0000 | 0.7376 | 41.825 | 614.968 |
+| live hybrid, RRF k=60, corrected passage encoding | test | 0.7987 | 1.0000 | 0.7242 | 26.982 | 49.550 |
 | live BM25, semantic-indexed corpus | test | 0.8224 | 1.0000 | 0.7315 | 5.896 | 15.511 |
 
-Development sweeps over BM25 `k1`/`b`, field boosts, all-terms bonus, phrase proximity, and BM25/TF-IDF blending did not beat TF-IDF on dev, so those speculative knobs were removed. RRF `k=10` won on dev but lost on held-out, so the default remains `k=60`.
+Development sweeps over BM25 `k1`/`b`, field boosts, all-terms bonus, phrase proximity, and BM25/TF-IDF blending did not beat TF-IDF on dev, so those speculative knobs were removed. RRF `k=10` won on dev with the pre-fix vectors but lost on held-out, so the default remains `k=60`. A review found that indexed documents had been encoded with the query prefix; `embed_document` now uses the passage path and all corrected rows were regenerated from a fresh index.
 
 ## Offline verification
 

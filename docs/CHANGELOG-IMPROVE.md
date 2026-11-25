@@ -51,7 +51,9 @@ All notable changes for the real-IR improvement effort. Entries are grouped by w
 - Exposed `EMBEDDING_MODEL` through `.env.example` and Compose.
 - Ran dev-only tuning sweeps for BM25 parameters, field boosts, all-terms bonus, phrase proximity, and BM25/TF-IDF blending. None improved dev nDCG, so the speculative knobs were removed.
 - Evaluated semantic and hybrid modes on dev and held-out splits; RRF `k=10` won on dev but lost on held-out, so the default remains `k=60`.
-- Backend suite grew to 65 passing tests; frontend lint, typecheck and production build pass.
+- Fixed a review blocker: `embed_document` now uses the passage embedding path instead of the query prefix; added a regression test.
+- Extracted vector normalization into one helper and fail loudly when `EMBEDDING_MODEL` is set but FastEmbed is unavailable.
+- Backend suite grew to 66 passing tests; frontend lint, typecheck and production build pass.
 
 ### Not claimed
 

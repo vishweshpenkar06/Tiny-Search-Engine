@@ -11,6 +11,14 @@ _TOKEN_RE = re.compile(r"\w+", re.UNICODE)
 _DIMENSIONS = 384
 
 
+def normalize(values) -> tuple[float, ...]:
+    vector = [float(value) for value in values]
+    norm = math.sqrt(sum(value * value for value in vector))
+    if norm == 0.0:
+        return tuple(vector)
+    return tuple(value / norm for value in vector)
+
+
 class HashingEmbedder:
     name = "local-hashing-v1"
 
@@ -25,10 +33,7 @@ class HashingEmbedder:
             index = int.from_bytes(digest[:4], "big") % _DIMENSIONS
             sign = 1.0 if digest[4] % 2 == 0 else -1.0
             vector[index] += sign
-        norm = math.sqrt(sum(value * value for value in vector))
-        if norm == 0.0:
-            return tuple(vector)
-        return tuple(value / norm for value in vector)
+        return normalize(vector)
 
     def embed_query(self, text: str) -> tuple[float, ...]:
         return self._vector(text)
@@ -38,24 +43,16 @@ class HashingEmbedder:
 
 
 class FastEmbedEmbedder:
-    def __init__(self, model: str, cache_dir):
+    def __init__(self, model_id: str, cache_dir):
         module = importlib.import_module("fastembed")
-        self.name = f"fastembed:{model}"
-        self.model = module.TextEmbedding(model_name=model, cache_dir=str(cache_dir))
-
-    @staticmethod
-    def _normalize(values) -> tuple[float, ...]:
-        vector = [float(value) for value in values]
-        norm = math.sqrt(sum(value * value for value in vector))
-        if norm == 0.0:
-            return tuple(vector)
-        return tuple(value / norm for value in vector)
+        self.name = f"fastembed:{model_id}"
+        self.model = module.TextEmbedding(model_name=model_id, cache_dir=str(cache_dir))
 
     def embed_query(self, text: str) -> tuple[float, ...]:
-        return self._normalize(next(self.model.query_embed([text])))
+        return normalize(next(self.model.query_embed([text])))
 
     def embed_documents(self, texts: list[str]) -> list[tuple[float, ...]]:
-        return [self._normalize(values) for values in self.model.passage_embed(texts)]
+        return [normalize(values) for values in self.model.passage_embed(texts)]
 
 
 _PROVIDER = None
@@ -74,7 +71,7 @@ def embed_documents(texts: list[str]) -> list[tuple[float, ...]]:
 
 
 def embed_document(text: str) -> tuple[float, ...]:
-    return embed_query(text)
+    return embed_documents([text])[0]
 
 
 def _provider():
@@ -82,12 +79,12 @@ def _provider():
     if _PROVIDER is not None:
         return _PROVIDER
     config = load_config()
-    model = os.getenv("EMBEDDING_MODEL", "")
-    if model:
+    model_id = os.getenv("EMBEDDING_MODEL", "")
+    if model_id:
         try:
-            _PROVIDER = FastEmbedEmbedder(model, config.model_dir)
-            return _PROVIDER
-        except Exception:
-            pass
+            _PROVIDER = FastEmbedEmbedder(model_id, config.model_dir)
+        except ImportError as exc:
+            raise RuntimeError("EMBEDDING_MODEL requires fastembed; install backend/requirements-ml.txt") from exc
+        return _PROVIDER
     _PROVIDER = HashingEmbedder()
     return _PROVIDER
