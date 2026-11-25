@@ -153,12 +153,12 @@ class AnalyzerTests(unittest.TestCase):
         analyzer = Analyzer(self.config, synonyms={})
         for word in ("run", "runs", "running"):
             self.assertEqual(analyzer.canonical_terms(word), ("run",))
-        self.assertEqual(analyzer.canonical_terms("stories"), ("story",))
+        self.assertEqual(analyzer.canonical_terms("stories"), ("stori",))
         self.assertEqual(analyzer.canonical_terms("Café"), ("café",))
 
     def test_synonyms_loaded_without_downloads(self):
         analyzer = Analyzer(self.config)
-        self.assertIn("automobile", [term for term, _ in analyzer.expand("car")[1:]])
+        self.assertIn("automobil", [term for term, _ in analyzer.expand("car")[1:]])
         self.assertIn("car", [term for term, _ in analyzer.expand("automobile")[1:]])
 
     def test_tokenizer_wrapper(self):

@@ -65,7 +65,7 @@ def static_rank(query, doc_ids, terms, df):
 
 def live_rank(query, api_url, retrieval, ranking, limit, credentials):
     payload = json.dumps(
-        {"query": query, "mode": retrieval, "ranking": ranking, "limit": limit, "sort": "relevance"}
+        {"query": query, "mode": retrieval, "ranking": ranking, "fuzzy": False, "limit": limit, "sort": "relevance"}
     ).encode("utf-8")
     headers = {"Content-Type": "application/json"}
     if credentials:
@@ -158,11 +158,14 @@ def main():
     parser.add_argument("--retrieval", choices=["lexical", "semantic", "hybrid"], default="lexical")
     parser.add_argument("--ranking", choices=["tfidf", "bm25"], default="tfidf")
     parser.add_argument("--k", type=int, default=10)
+    parser.add_argument("--split", choices=["all", "dev", "test"], default="all")
     parser.add_argument("--json", type=Path)
     parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args()
 
     queries = load_queries(args.queries)
+    if args.split != "all":
+        queries = [query for query in queries if query.get("split", "dev") == args.split]
     docs = load_docs(args.docs)
     if args.source == "static":
         terms, df = build_index(docs)

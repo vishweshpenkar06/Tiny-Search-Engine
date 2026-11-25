@@ -1,16 +1,19 @@
 # Baseline — Legacy TF-IDF
 
-Command used to record this baseline:
+Command used to record the frozen baseline:
 
 ```
-python3 eval/run_eval.py --source static --ranking tfidf --json eval/results/baseline.json
+python3 eval/generate_fixtures.py
+python3 eval/run_eval.py --source static --ranking tfidf --split test --json eval/results/baseline-test.json
 ```
 
 ## Fixture set
 
-- 20 Markdown documents in `eval/docs/`, five topics, four documents per topic.
-- 12 graded queries in `eval/queries.jsonl`; grades are 0–3 and an unlisted document has grade 0.
+- 100 Markdown documents in `eval/docs/`, five topics, 20 documents per topic.
+- 50 graded queries in `eval/queries.jsonl`; grades are 0–3 and an unlisted document has grade 0.
+- 35 development queries (`split=dev`) and 15 held-out queries (`split=test`). Ranking features must be tuned only on `dev`.
 - Cut-off `k = 10`. Ties are broken by document id so repeated runs are byte-identical.
+- Fixtures are regenerated deterministically by `eval/generate_fixtures.py`.
 
 ## Exact metric definitions
 
@@ -23,18 +26,20 @@ For a query with relevance grades `g_1 ... g_k` in retrieved rank order and a se
 - `Recall@k = |top_k retrieved intersect R| / |R|`, or `0` when `R` is empty.
 - Latency is measured with `time.perf_counter_ns` around ranking only; p50 and p95 are nearest-rank percentiles in milliseconds.
 
-The aggregate nDCG, MRR and Recall are unweighted means over all 12 queries. These definitions are implemented once in `eval/run_eval.py` and are shared by the static and live modes.
+The aggregate nDCG, MRR and Recall are unweighted means over the selected split. These definitions are implemented once in `eval/run_eval.py` and are shared by the static and live modes.
 
-## Recorded result
+## Recorded results
 
-| Source | nDCG@10 | MRR | Recall@10 | p50 ms | p95 ms |
-|---|---|---|---|---|---|
-| static TF-IDF | 0.9732 | 1.0000 | 0.9167 | 0.030 | 0.053 |
+| Split | Queries | nDCG@10 | MRR | Recall@10 | p50 ms | p95 ms |
+|---|---:|---:|---:|---:|---:|---:|
+| all | 50 | 0.7817 | 1.0000 | 0.7836 | 0.085 | 0.110 |
+| dev | 35 | 0.7881 | 1.0000 | 0.7974 | 0.086 | 0.111 |
+| test | 15 | 0.7668 | 1.0000 | 0.7515 | 0.143 | 0.171 |
 
 The static ranker is the legacy TF-IDF implementation: lowercase alphanumeric tokens, a small stop-word list, `tf = count / document_length`, `idf = log(1 + N / (1 + df))`, and score `sum(tf * idf)` over query terms. No stemming, synonyms, fuzzy expansion, field boosts or vectors are used.
 
 ## Interpretation
 
-This is a CI smoke fixture, not a meaningful quality estimate. With only 20 documents and one dominant term per query, TF-IDF already places the top document first for all 12 queries. The remaining gap comes from secondary relevant documents that are pushed past rank 10. Differences below roughly 0.02 nDCG on this set should not be treated as improvements.
+Use the `test` row as the comparison baseline. Queries are synthetic and each contains a dominant term, so MRR saturates at 1.0 and cannot discriminate ranking systems. Differences below roughly 0.02 nDCG on a 15-query split should not be treated as improvements; report paired per-query differences and confidence intervals before claiming a win.
 
-See `eval/RESULTS.md` for the template used to record later ranking changes and for the full list of limitations.
+See `eval/RESULTS.md` for recorded ranking variants and limitations.

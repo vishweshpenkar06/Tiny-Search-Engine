@@ -45,9 +45,9 @@ Returns `{"job_id": string, "status": "cancelling"}`.
 Request fields:
 
 - `query`: string, required, max 500 chars.
-- `ranking`: `tfidf` | `bm25`, default `bm25`.
+- `ranking`: `tfidf` | `bm25`, default `bm25`. `rank` is accepted as an alias.
 - `mode`: `lexical` | `semantic` | `hybrid`, default `lexical`.
-- `fuzzy`: boolean, default false.
+- `fuzzy`: boolean, default true. Set false for controlled ranking comparisons.
 - `threshold`: number 0–1 applied to the normalized score.
 - `limit`: integer 1–100, default 10.
 - `offset`: integer ≥ 0, default 0.

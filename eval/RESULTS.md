@@ -1,36 +1,36 @@
 # Evaluation Results
 
-This file is the reporting template for ranking changes. Fill one row per configuration, keep the command that produced it, and never overwrite the baseline in `BASELINE.md`.
-
-## How to produce a row
+All results below use the frozen fixture in `eval/`: 100 documents, 50 graded queries, 35 development queries and 15 held-out queries. Regenerate with:
 
 ```
-python3 eval/run_eval.py --source static --ranking tfidf --json eval/results/<name>.json
-python3 eval/run_eval.py --source live --api-url http://127.0.0.1:5000 --ranking bm25 --retrieval lexical --json eval/results/<name>.json
+python3 eval/generate_fixtures.py
+python3 eval/run_eval.py --source static --ranking tfidf --split test --json eval/results/baseline-test.json
+python3 eval/run_eval.py --source live --api-url http://127.0.0.1:5000 --ranking <ranking> --split test --json eval/results/<name>.json
 ```
 
-Metric definitions, cut-off and tie-breaking are fixed in `BASELINE.md` and implemented once in `eval/run_eval.py`.
+Live queries explicitly send `fuzzy: false` for controlled ranking comparisons. Metric definitions, cutoff, and tie-breaking are fixed in `eval/BASELINE.md`.
 
 ## Results
 
-| Configuration | nDCG@10 | MRR | Recall@10 | p50 ms | p95 ms | Command / commit |
-|---|---|---|---|---|---|---|
-| static TF-IDF (baseline) | 0.9732 | 1.0000 | 0.9167 | 0.030 | 0.053 | `python3 eval/run_eval.py --source static --ranking tfidf` |
-| live BM25, 20 docs | 0.9653 | 1.0000 | 0.8333 | 1.831 | 6.612 | `python3 eval/run_eval.py --source live --ranking bm25 --api-url http://127.0.0.1:5000 --json eval/results/live-bm25.json` |
-| live TF-IDF, 20 docs | 0.9636 | 1.0000 | 0.8333 | 1.351 | 4.670 | `python3 eval/run_eval.py --source live --ranking tfidf --api-url http://127.0.0.1:5000 --json eval/results/live-tfidf.json` |
+| Configuration | Split | nDCG@10 | MRR | Recall@10 | p50 ms | p95 ms |
+|---|---|---:|---:|---:|---:|---:|
+| static TF-IDF baseline | test | 0.7668 | 1.0000 | 0.7515 | 0.143 | 0.171 |
+| static TF-IDF baseline | all | 0.7817 | 1.0000 | 0.7836 | 0.085 | 0.110 |
+| live TF-IDF, 100 docs | test | 0.9032 | 1.0000 | 0.7315 | 2.032 | 4.968 |
+| live BM25, 100 docs | test | 0.8224 | 1.0000 | 0.7315 | 2.238 | 5.904 |
+
+Development-set BM25 sweeps over `BM25_K1`/`BM25_B` reached at most 0.8058 nDCG@10, so no held-out BM25 win was claimed.
 
 ## Honest limitations
 
-- The fixture has 20 documents and 12 queries. It is a CI smoke test, not a quality benchmark.
-- Five topics with one obvious keyword per query make MRR saturate at 1.0. MRR cannot discriminate between configurations here.
-- Grades are hand authored by the same person who wrote the documents, so they encode intent rather than user behaviour.
-- Static mode measures a small Python loop, not the production index, tokenizer or ORM. Live mode is required to exercise the real service.
-- Live mode maps results to fixture ids through the returned filename stem. It assumes the fixtures were uploaded with their original names; otherwise metrics are undefined.
-- Latency is ranking time only. It excludes HTTP transport, JSON encoding and network variation, and it was measured on one machine with no concurrency.
-- No confidence intervals or significance tests are computed. Treat differences below 0.02 nDCG@10 as noise.
-- The IMPROVE spec asks for 50 queries, 100 documents and a 100k-doc load test. Those targets are not met by this smoke set; use `benchmarks/` for scale measurements.
-- Semantic and hybrid modes require a local embedding model and are not evaluated here. Their interface is wired in the API but no scores are claimed.
+- Queries are synthetic and hand-authored alongside the documents. MRR saturates at 1.0 and cannot discriminate between configurations.
+- The held-out set has only 15 queries. Differences below 0.02 nDCG@10 should be treated as noise.
+- No paired-bootstrap confidence intervals are computed.
+- Live results exercise the real API, index, analyzer, and score normalization, but use one process and no concurrency.
+- The live fixture maps results to qrels through original upload filenames.
+- Hybrid and semantic modes are wired and smoke-tested but are not evaluated on this gold set.
+- The spec's 15% relative nDCG improvement target is **not met** by these results.
 
 ## Claim discipline
 
-Do not claim that BM25, synonyms, fuzzy matching or hybrid retrieval improves this dataset unless a row above shows it with the same command and fixture revision. A missing row means an unmeasured claim.
+BM25 is implemented and selectable, but on this fixture it does **not** beat TF-IDF. Do not claim a relevance improvement without a new held-out result showing it.

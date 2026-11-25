@@ -25,10 +25,10 @@ All notable changes for the real-IR improvement effort. Entries are grouped by w
 
 ### Evaluation and benchmarks
 
-- Added 20 deterministic documents across five topics and 12 graded queries.
-- Added `eval/run_eval.py` with fixed nDCG@10, MRR and Recall@10 definitions, static and live modes, and `perf_counter_ns` latency.
-- Recorded the legacy TF-IDF baseline in `eval/BASELINE.md`: nDCG@10 0.9732, MRR 1.0000, Recall@10 0.9167.
-- Added `eval/RESULTS.md` with a reporting template and explicit limitations.
+- Added `eval/generate_fixtures.py`: 100 deterministic documents, 50 graded queries, and a frozen 35-query dev / 15-query test split.
+- Added `eval/run_eval.py` with fixed nDCG@10, MRR and Recall@10 definitions, static and live modes, split filtering, and `perf_counter_ns` latency.
+- Recorded the legacy TF-IDF baseline in `eval/BASELINE.md`: held-out nDCG@10 0.7668, MRR 1.0000, Recall@10 0.7515.
+- Added `eval/RESULTS.md` with live results and explicit limitations.
 - Added deterministic 10k/100k corpus generation and a benchmark runner with a declared workload and percentile latency.
 
 ### Documentation
@@ -44,12 +44,14 @@ All notable changes for the real-IR improvement effort. Entries are grouped by w
 - Added `/api/readyz` as the browser-relative readiness alias and preserved original upload filenames in SQLite metadata.
 - Removed Vercel Analytics from the self-hosted layout and added a working ESLint flat config.
 - Fixed the benchmark runner's `--limit-docs` default and recorded real 10k and 100k local harness results in `eval/BENCHMARKS.md`.
-- Recorded live 20-document evaluations in `eval/RESULTS.md`: BM25 nDCG@10 0.9653 and TF-IDF 0.9636. The difference is below the noise threshold for this fixture.
+- Recorded live 100-document held-out evaluations in `eval/RESULTS.md`: TF-IDF nDCG@10 0.9032 and BM25 0.8224. BM25 does not beat TF-IDF on this fixture.
+- Added Snowball stemming, `rank` as a `ranking` alias, and fuzzy matching enabled by default per the spec.
+- Added `backend/requirements-ml.txt` and `scripts/vendor_embedding_model.py` for offline model packaging with checksums.
 - Backend suite grew to 65 passing tests; frontend lint, typecheck and production build pass.
 
 ### Not claimed
 
-- No meaningful ranking improvement is claimed: the smoke fixture saturates MRR and the BM25/TF-IDF difference is below the stated noise threshold.
-- The full 50-query / 100-document gold set is not present; this repository contains a 20-document / 12-query CI smoke set.
-- Benchmarks use the simplified local harness, not the production Flask path or concurrent HTTP load.
+- No relevance improvement is claimed: BM25 is below TF-IDF on the held-out split and the 15% target is unmet.
 - Hybrid relevance is not evaluated on the gold set; it is wired and smoke-tested but not claimed as better than BM25.
+- Benchmarks use the simplified local harness, not the production Flask path or concurrent HTTP load.
+- Real transformer weights are not bundled; the default provider is deterministic local hashing.

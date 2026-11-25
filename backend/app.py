@@ -412,9 +412,10 @@ def create_app(config: Config | None = None, service=None) -> Flask:
         if spec.is_empty:
             raise ApiError("Query cannot be empty", 400, "invalid_query")
 
-        ranking = enum_value(data, "ranking", RANKING_MODES, "bm25")
+        ranking_value = data.get("ranking", data.get("rank", "bm25"))
+        ranking = enum_value({"value": ranking_value}, "value", RANKING_MODES, "bm25")
         mode = enum_value(data, "mode", RETRIEVAL_MODES, "lexical")
-        fuzzy = bool_value(data, "fuzzy", False)
+        fuzzy = bool_value(data, "fuzzy", True)
         sort = enum_value(data, "sort", SORT_MODES, "relevance")
         try:
             threshold = validate_threshold(data.get("threshold", 0.0))

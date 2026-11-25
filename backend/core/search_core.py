@@ -281,6 +281,7 @@ def _edit_distance(left: str, right: str) -> int:
 
 
 _FUZZY_CACHE: dict[int, dict[str, set[str]]] = {}
+_SURFACE_CACHE: dict[int, dict[str, str]] = {}
 
 
 def _fuzzy_index(data: SnapshotData) -> dict[str, set[str]]:
@@ -319,6 +320,25 @@ def _fuzzy_candidates(term: str, index: dict[str, set[str]]) -> list[str]:
     return [word for _, word in ranked[:20]]
 
 
+def _surface_term(term: str, analyzer: Analyzer, data: SnapshotData) -> str:
+    cached = _SURFACE_CACHE.get(data.generation)
+    if cached is None:
+        cached = {}
+        for document in data.documents.values():
+            for text in (document.title, " ".join(document.headings), document.body):
+                for match in _TOKEN_RE.finditer(text or ""):
+                    surface = match.group(0).lower()
+                    canonical = analyzer.canonical_terms(surface)
+                    if canonical and canonical[0] not in cached:
+                        cached[canonical[0]] = surface
+        _SURFACE_CACHE[data.generation] = cached
+        if len(_SURFACE_CACHE) > 8:
+            oldest = next(iter(_SURFACE_CACHE))
+            if oldest != data.generation:
+                _SURFACE_CACHE.pop(oldest, None)
+    return cached.get(term, term)
+
+
 def _fuzzy_expansion(query_spec, analyzer: Analyzer, data: SnapshotData):
     index = _fuzzy_index(data)
     additions: list[_QueryTerm] = []
@@ -338,7 +358,7 @@ def _fuzzy_expansion(query_spec, analyzer: Analyzer, data: SnapshotData):
             seen.add(candidate)
             additions.append(_QueryTerm(candidate, 0.35, True))
             if correction is None:
-                correction = candidate
+                correction = _surface_term(candidate, analyzer, data)
     return tuple(additions), correction
 
 

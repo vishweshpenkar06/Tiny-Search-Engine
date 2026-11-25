@@ -20,7 +20,7 @@ export const DEFAULT_SEARCH_STATE: SearchState = {
   q: '',
   ranking: 'bm25',
   mode: 'lexical',
-  fuzzy: false,
+  fuzzy: true,
   threshold: 0,
   sort: 'relevance',
   offset: 0,
@@ -51,7 +51,7 @@ export function parseSearchState(input: URLSearchParams | string | null): Search
     q: (params.get('q') ?? '').slice(0, DEFAULT_LIMITS.max_query_length),
     ranking: oneOf<RankingMode>(params.get('ranking'), DEFAULT_LIMITS.ranking_modes, DEFAULT_SEARCH_STATE.ranking),
     mode: oneOf<RetrievalMode>(params.get('mode'), DEFAULT_LIMITS.retrieval_modes, DEFAULT_SEARCH_STATE.mode),
-    fuzzy: params.get('fuzzy') === '1' || params.get('fuzzy') === 'true',
+    fuzzy: params.get('fuzzy') !== '0' && params.get('fuzzy') !== 'false',
     threshold: rawThreshold === null ? 0 : boundedNumber(rawThreshold, 0, 0, 1),
     sort: oneOf<SortMode>(params.get('sort'), ['relevance', 'filename', 'size'], DEFAULT_SEARCH_STATE.sort),
     offset: rawOffset === null ? 0 : Math.floor(boundedNumber(rawOffset, 0, 0, 1000000)),
@@ -67,7 +67,7 @@ export function serializeSearchState(state: SearchState): URLSearchParams {
   if (q) params.set('q', q)
   if (state.ranking !== DEFAULT_SEARCH_STATE.ranking) params.set('ranking', state.ranking)
   if (state.mode !== DEFAULT_SEARCH_STATE.mode) params.set('mode', state.mode)
-  if (state.fuzzy) params.set('fuzzy', '1')
+  if (!state.fuzzy) params.set('fuzzy', '0')
   if (state.threshold > 0) params.set('threshold', String(Math.round(state.threshold * 100) / 100))
   if (state.sort !== DEFAULT_SEARCH_STATE.sort) params.set('sort', state.sort)
   if (state.offset > 0) params.set('offset', String(state.offset))

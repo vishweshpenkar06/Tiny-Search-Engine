@@ -52,6 +52,17 @@ python3 -c "from werkzeug.security import generate_password_hash; print(generate
 
 Keep it out of shell history if that matters in your environment. A plaintext password must never be committed.
 
+## Offline embeddings
+
+The default provider is deterministic local hashing and needs no model. To use a sentence-transformer model:
+
+```
+python3 -m pip install -r backend/requirements-ml.txt
+python3 scripts/vendor_embedding_model.py --model BAAI/bge-small-en-v1.5
+```
+
+The script writes the model under `backend/data/models`, records `SHA256SUMS`, and prints the `EMBEDDING_MODEL` value to set. At runtime the backend loads only from that local directory with `local_files_only=True`; no network access is required. Re-embed existing documents after changing the model because vectors are versioned by model name.
+
 ## Health and readiness
 
 | Path | Purpose | Auth |

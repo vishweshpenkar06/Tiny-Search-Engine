@@ -1,3 +1,4 @@
+import importlib
 import json
 import re
 from pathlib import Path
@@ -45,8 +46,16 @@ def search_fields() -> tuple[str, ...]:
     return _FIELDS
 
 
+try:
+    _SNOWBALL = importlib.import_module("snowballstemmer").stemmer("english")
+except ImportError:
+    _SNOWBALL = None
+
+
 def stem(word: str) -> str:
     value = word.lower()
+    if _SNOWBALL is not None:
+        return _SNOWBALL.stemWord(value)
     if len(value) > 4 and value.endswith("ies"):
         value = value[:-3] + "y"
     elif len(value) > 5 and value.endswith("ing") and any(c in _VOWELS for c in value[:-3]):

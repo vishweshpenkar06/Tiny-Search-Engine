@@ -270,7 +270,7 @@ function normalizeSearchBody(params: SearchRequest): Record<string, unknown> {
     query,
     ranking,
     mode,
-    fuzzy: Boolean(params.fuzzy),
+    fuzzy: params.fuzzy !== false,
     threshold,
     limit,
     offset,
