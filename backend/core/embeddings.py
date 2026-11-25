@@ -3,7 +3,6 @@ import importlib
 import math
 import os
 import re
-from pathlib import Path
 
 from config import load_config
 
@@ -38,20 +37,25 @@ class HashingEmbedder:
         return [self._vector(text) for text in texts]
 
 
-class SentenceTransformerEmbedder:
-    def __init__(self, model_path: Path):
-        module = importlib.import_module("sentence_transformers")
-        self.name = f"sentence-transformers:{model_path.name}"
-        self.model = module.SentenceTransformer(str(model_path), local_files_only=True)
+class FastEmbedEmbedder:
+    def __init__(self, model: str, cache_dir):
+        module = importlib.import_module("fastembed")
+        self.name = f"fastembed:{model}"
+        self.model = module.TextEmbedding(model_name=model, cache_dir=str(cache_dir))
+
+    @staticmethod
+    def _normalize(values) -> tuple[float, ...]:
+        vector = [float(value) for value in values]
+        norm = math.sqrt(sum(value * value for value in vector))
+        if norm == 0.0:
+            return tuple(vector)
+        return tuple(value / norm for value in vector)
 
     def embed_query(self, text: str) -> tuple[float, ...]:
-        return tuple(float(value) for value in self.model.encode(f"query: {text}", normalize_embeddings=True))
+        return self._normalize(next(self.model.query_embed([text])))
 
     def embed_documents(self, texts: list[str]) -> list[tuple[float, ...]]:
-        encoded = self.model.encode(
-            [f"passage: {text}" for text in texts], normalize_embeddings=True
-        )
-        return [tuple(float(value) for value in row) for row in encoded]
+        return [self._normalize(values) for values in self.model.passage_embed(texts)]
 
 
 _PROVIDER = None
@@ -78,14 +82,12 @@ def _provider():
     if _PROVIDER is not None:
         return _PROVIDER
     config = load_config()
-    model_name = os.getenv("EMBEDDING_MODEL", "")
-    if model_name:
-        candidate = config.model_dir / model_name
-        if candidate.is_dir():
-            try:
-                _PROVIDER = SentenceTransformerEmbedder(candidate)
-                return _PROVIDER
-            except Exception:
-                pass
+    model = os.getenv("EMBEDDING_MODEL", "")
+    if model:
+        try:
+            _PROVIDER = FastEmbedEmbedder(model, config.model_dir)
+            return _PROVIDER
+        except Exception:
+            pass
     _PROVIDER = HashingEmbedder()
     return _PROVIDER

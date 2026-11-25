@@ -39,19 +39,22 @@ All notable changes for the real-IR improvement effort. Entries are grouped by w
 
 ### Integration follow-up
 
-- Added bounded fuzzy matching with a per-generation deletion index, 20-term expansion cap, typo correction reporting, and opt-in `fuzzy` requests.
-- Added `core/embeddings.py` with deterministic offline hashing vectors and optional pinned local `sentence-transformers` models; upload and crawl jobs persist vectors when embeddings are enabled.
+- Added bounded fuzzy matching with a per-generation deletion index, 20-term expansion cap, typo correction reporting, and `fuzzy` enabled by default.
+- Added `core/embeddings.py` with deterministic offline hashing vectors and optional vendored FastEmbed ONNX models; upload and crawl jobs persist vectors when embeddings are enabled.
 - Added `/api/readyz` as the browser-relative readiness alias and preserved original upload filenames in SQLite metadata.
 - Removed Vercel Analytics from the self-hosted layout and added a working ESLint flat config.
 - Fixed the benchmark runner's `--limit-docs` default and recorded real 10k and 100k local harness results in `eval/BENCHMARKS.md`.
 - Recorded live 100-document held-out evaluations in `eval/RESULTS.md`: TF-IDF nDCG@10 0.9032 and BM25 0.8224. BM25 does not beat TF-IDF on this fixture.
 - Added Snowball stemming, `rank` as a `ranking` alias, and fuzzy matching enabled by default per the spec.
 - Added `backend/requirements-ml.txt` and `scripts/vendor_embedding_model.py` for offline model packaging with checksums.
+- Replaced the unusable PyTorch install path with FastEmbed ONNX; vendored `BAAI/bge-small-en-v1.5` and verified query encoding with `HF_HUB_OFFLINE=1`.
+- Exposed `EMBEDDING_MODEL` through `.env.example` and Compose.
+- Ran dev-only tuning sweeps for BM25 parameters, field boosts, all-terms bonus, phrase proximity, and BM25/TF-IDF blending. None improved dev nDCG, so the speculative knobs were removed.
+- Evaluated semantic and hybrid modes on dev and held-out splits; RRF `k=10` won on dev but lost on held-out, so the default remains `k=60`.
 - Backend suite grew to 65 passing tests; frontend lint, typecheck and production build pass.
 
 ### Not claimed
 
-- No relevance improvement is claimed: BM25 is below TF-IDF on the held-out split and the 15% target is unmet.
-- Hybrid relevance is not evaluated on the gold set; it is wired and smoke-tested but not claimed as better than BM25.
+- No relevance improvement is claimed: BM25, semantic, and hybrid are all below TF-IDF on the held-out split and the 15% target is unmet.
 - Benchmarks use the simplified local harness, not the production Flask path or concurrent HTTP load.
-- Real transformer weights are not bundled; the default provider is deterministic local hashing.
+- Real model weights are not committed; the default runtime provider remains deterministic local hashing and operators must vendor a model for semantic modes.

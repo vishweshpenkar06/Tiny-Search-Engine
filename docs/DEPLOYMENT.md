@@ -37,7 +37,8 @@ All values are read by `backend/config.py` unless marked as compose-only. See `.
 | `MAX_FILES` | `100` | Files per upload batch |
 | `MAX_QUERY_LENGTH` | `500` | Characters after sanitization |
 | `RATE_LIMIT_RPM` | `120` | Fixed-window limit per client address |
-| `ENABLE_EMBEDDINGS` | `false` | Requires a local embedding module and model |
+| `ENABLE_EMBEDDINGS` | `false` | Enables persisted vectors and semantic query encoding |
+| `EMBEDDING_MODEL` | empty | Vendored FastEmbed model name; empty uses local hashing |
 | `ENABLE_CRAWLER` | `false` | Crawl endpoint returns 403 while off |
 | `CRAWLER_ALLOWED_DOMAINS` | empty | Comma-separated allowlist |
 | `BM25_K1`, `BM25_B`, `RRF_K` | `1.2`, `0.75`, `60` | Ranking parameters |
@@ -54,14 +55,14 @@ Keep it out of shell history if that matters in your environment. A plaintext pa
 
 ## Offline embeddings
 
-The default provider is deterministic local hashing and needs no model. To use a sentence-transformer model:
+The default provider is deterministic local hashing and needs no model. To use a local ONNX sentence model:
 
 ```
 python3 -m pip install -r backend/requirements-ml.txt
 python3 scripts/vendor_embedding_model.py --model BAAI/bge-small-en-v1.5
 ```
 
-The script writes the model under `backend/data/models`, records `SHA256SUMS`, and prints the `EMBEDDING_MODEL` value to set. At runtime the backend loads only from that local directory with `local_files_only=True`; no network access is required. Re-embed existing documents after changing the model because vectors are versioned by model name.
+The script downloads the model once into `backend/data/models` and records `SHA256SUMS`. Set `ENABLE_EMBEDDINGS=true` and `EMBEDDING_MODEL=BAAI/bge-small-en-v1.5` to use it. FastEmbed resolves the model from that cache directory; after vendoring, no network access is required. Re-embed existing documents after changing the model because vectors are versioned by model name.
 
 ## Health and readiness
 

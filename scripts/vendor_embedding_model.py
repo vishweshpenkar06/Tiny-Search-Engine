@@ -21,23 +21,18 @@ def main() -> None:
     parser.add_argument("--out", type=Path, default=Path("backend/data/models"))
     args = parser.parse_args()
 
-    sentence_transformers = importlib.import_module("sentence_transformers")
-    sentence_transformer = sentence_transformers.SentenceTransformer
+    module = importlib.import_module("fastembed")
+    module.TextEmbedding(model_name=args.model, cache_dir=str(args.out))
 
-    target = args.out / args.model.replace("/", "__")
-    target.mkdir(parents=True, exist_ok=True)
-    model = sentence_transformer(args.model, cache_folder=str(target))
-    model.save(str(target))
-
-    checksums = target / "SHA256SUMS"
+    checksums = args.out / "SHA256SUMS"
     lines = [
-        f"{sha256_file(path)}  {path.relative_to(target).as_posix()}"
-        for path in sorted(target.rglob("*"))
+        f"{sha256_file(path)}  {path.relative_to(args.out).as_posix()}"
+        for path in sorted(args.out.rglob("*"))
         if path.is_file() and path.name != "SHA256SUMS"
     ]
     checksums.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(f"vendored {args.model} to {target}")
-    print(f"set EMBEDDING_MODEL={target.name} and ENABLE_EMBEDDINGS=true")
+    print(f"vendored {args.model} to {args.out}")
+    print(f"set EMBEDDING_MODEL={args.model} and ENABLE_EMBEDDINGS=true")
 
 
 if __name__ == "__main__":

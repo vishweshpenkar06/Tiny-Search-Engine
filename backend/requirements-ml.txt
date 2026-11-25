@@ -1,1 +1,1 @@
-sentence-transformers==3.4.1
+fastembed==0.9.1
