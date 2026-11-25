@@ -18,7 +18,7 @@ export function formatDate(dateStr: string) {
       month: 'short',
       day: 'numeric',
     }).format(date)
-  } catch (e) {
+  } catch {
     return dateStr
   }
 }

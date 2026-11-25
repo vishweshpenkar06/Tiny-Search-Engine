@@ -1,0 +1,13 @@
+{
+  "car": ["automobile", "vehicle"],
+  "automobile": ["car", "vehicle"],
+  "vehicle": ["car", "automobile"],
+  "fast": ["quick", "rapid", "speedy"],
+  "quick": ["fast", "rapid"],
+  "large": ["big", "huge"],
+  "big": ["large", "huge"],
+  "search": ["find", "lookup", "query"],
+  "find": ["search", "lookup"],
+  "error": ["bug", "fault", "issue"],
+  "bug": ["error", "fault"]
+}
