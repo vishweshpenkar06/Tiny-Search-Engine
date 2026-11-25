@@ -156,7 +156,7 @@ def main():
     parser.add_argument("--source", choices=["static", "live"], default="static")
     parser.add_argument("--api-url", default="http://127.0.0.1:5000")
     parser.add_argument("--retrieval", choices=["lexical", "semantic", "hybrid"], default="lexical")
-    parser.add_argument("--ranking", choices=["tfidf", "bm25"], default="tfidf")
+    parser.add_argument("--ranking", choices=["tfidf", "bm25", "learned"], default="tfidf")
     parser.add_argument("--k", type=int, default=10)
     parser.add_argument("--split", choices=["all", "dev", "test"], default="all")
     parser.add_argument("--json", type=Path)

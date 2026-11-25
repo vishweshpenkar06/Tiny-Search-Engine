@@ -87,6 +87,21 @@ class LexicalModeTests(unittest.TestCase):
         self.config = make_config()
         self.analyzer = Analyzer(self.config, synonyms={})
 
+    def test_learned_ranking_blends_lexical_signals(self):
+        snapshot = make_snapshot(
+            [make_doc("d1", "alpha beta"), make_doc("d2", "gamma")], self.config
+        )
+        page = snapshot.search(spec("alpha beta", "alpha", "beta"), SearchOptions(ranking="learned"), self.analyzer)
+        self.assertEqual(page.ranking, "learned")
+        self.assertEqual([hit.doc_id for hit in page.results], ["d1"])
+        for hit in page.results:
+            self.assertAlmostEqual(sum(hit.explanation.values()), hit.raw_score)
+
+    def test_unsupported_ranking_is_rejected(self):
+        snapshot = make_snapshot([make_doc("d1", "alpha")], self.config)
+        with self.assertRaisesRegex(ValueError, "Unsupported ranking"):
+            snapshot.search(spec("alpha", "alpha"), SearchOptions(ranking="unknown"), self.analyzer)
+
     def test_tfidf_ranking(self):
         snapshot = make_snapshot(
             [make_doc("d1", "alpha alpha beta"), make_doc("d2", "alpha gamma")], self.config

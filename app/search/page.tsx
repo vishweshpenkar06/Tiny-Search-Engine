@@ -27,6 +27,7 @@ import { ErrorBoundary } from '@/components/error-boundary'
 const RANKING_OPTIONS: Array<{ value: SearchState['ranking']; label: string }> = [
   { value: 'bm25', label: 'BM25' },
   { value: 'tfidf', label: 'TF-IDF' },
+  { value: 'learned', label: 'Learned' },
 ]
 
 const MODE_OPTIONS: Array<{ value: SearchState['mode']; label: string }> = [

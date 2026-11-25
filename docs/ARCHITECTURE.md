@@ -57,7 +57,7 @@ The browser never learns the Flask origin. Only the Next.js container publishes 
 
 ## Ranking and modes
 
-`ranking` selects `tfidf` or `bm25`. `mode` selects `lexical`, `semantic` or `hybrid`. The API builds `SearchOptions`, and only computes a query vector when `ENABLE_EMBEDDINGS=true` and the mode is `semantic` or `hybrid`. The embedding provider is `core.embeddings`: local hashing by default, or a vendored FastEmbed ONNX model when `EMBEDDING_MODEL` is set.
+`ranking` selects `tfidf`, `bm25` or `learned`. `mode` selects `lexical`, `semantic` or `hybrid`. The API builds `SearchOptions`, and computes a query vector when `ENABLE_EMBEDDINGS=true` and either the mode is `semantic`/`hybrid` or ranking is `learned`. The embedding provider is `core.embeddings`: local hashing by default, or a vendored FastEmbed ONNX model when `EMBEDDING_MODEL` is set. `learned` blends normalized component scores with weights from `backend/core/ranker_weights.json`.
 
 `threshold` filters on normalized `score` (`raw_score / max_raw_score`, capped at 1). Ranking explanations expose the original components.
 

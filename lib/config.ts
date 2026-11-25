@@ -5,7 +5,7 @@ export const DEFAULT_LIMITS = {
   max_file_size: 10 * 1024 * 1024,
   max_files: 100,
   max_query_length: 500,
-  ranking_modes: ['tfidf', 'bm25'],
+  ranking_modes: ['tfidf', 'bm25', 'learned'],
   retrieval_modes: ['lexical', 'semantic', 'hybrid'],
 }
 

@@ -55,8 +55,16 @@ All notable changes for the real-IR improvement effort. Entries are grouped by w
 - Extracted vector normalization into one helper and fail loudly when `EMBEDDING_MODEL` is set but FastEmbed is unavailable.
 - Backend suite grew to 66 passing tests; frontend lint, typecheck and production build pass.
 
+### Learned ranker phase
+
+- Added `ranking=learned`, a linear blend of normalized BM25, TF-IDF and optional semantic scores using `backend/core/ranker_weights.json`.
+- Added `eval/train_ranker.py` with dev-only grid search and an optional dev-internal train/validation split; held-out queries are never used for training.
+- Exposed `learned` through the API contract, config, frontend ranking selector and evaluation CLI.
+- Committed dev-validation weights: BM25 0.0404, TF-IDF 0.1010, semantic 0.8586.
+- Recorded held-out learned nDCG@10 0.8458: better than BM25 and hybrid on this fixture, below TF-IDF.
+
 ### Not claimed
 
-- No relevance improvement is claimed: BM25, semantic, and hybrid are all below TF-IDF on the held-out split and the 15% target is unmet.
+- No relevance improvement is claimed: BM25, semantic, hybrid and learned modes are all below TF-IDF on the held-out split and the 15% target is unmet.
 - Benchmarks use the simplified local harness, not the production Flask path or concurrent HTTP load.
 - Real model weights are not committed; the default runtime provider remains deterministic local hashing and operators must vendor a model for semantic modes.

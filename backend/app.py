@@ -34,7 +34,7 @@ except ImportError:
     CORS = None
 
 ALLOWED_EXTENSIONS = (".txt", ".md", ".html", ".htm", ".csv")
-RANKING_MODES = ("tfidf", "bm25")
+RANKING_MODES = ("tfidf", "bm25", "learned")
 RETRIEVAL_MODES = ("lexical", "semantic", "hybrid")
 SORT_MODES = ("relevance", "filename", "size")
 MUTATING_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
@@ -233,8 +233,8 @@ def create_app(config: Config | None = None, service=None) -> Flask:
             raise ApiError(f"{key} must be a boolean", 400, "invalid_parameter")
         return value
 
-    def query_vector(mode: str, text: str):
-        if not cfg.embeddings_enabled or mode not in ("semantic", "hybrid"):
+    def query_vector(mode: str, text: str, ranking: str = "bm25"):
+        if not cfg.embeddings_enabled or (mode not in ("semantic", "hybrid") and ranking != "learned"):
             return None
         from core.embeddings import embed_query
 
@@ -452,7 +452,7 @@ def create_app(config: Config | None = None, service=None) -> Flask:
             source_type=source_type,
             file_type=file_type,
         )
-        page = service.search(spec, options, query_vector=query_vector(mode, spec.raw))
+        page = service.search(spec, options, query_vector=query_vector(mode, spec.raw, ranking))
         body = _page_to_dict(page)
         body["elapsed_ms"] = round((time.perf_counter_ns() - started) / 1_000_000, 3)
         return api_success(body)

@@ -220,7 +220,7 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(unready["reason"], "cold_start")
 
         config = self.client.get("/api/config").json
-        self.assertEqual(config["ranking_modes"], ["tfidf", "bm25"])
+        self.assertEqual(config["ranking_modes"], ["tfidf", "bm25", "learned"])
         self.assertEqual(config["retrieval_modes"], ["lexical", "semantic", "hybrid"])
         self.assertEqual(config["max_file_size"], 64)
         self.assertFalse(config["auth_enabled"])

@@ -252,7 +252,7 @@ function clampInteger(value: number | undefined, min: number, max: number, fallb
 
 function normalizeSearchBody(params: SearchRequest): Record<string, unknown> {
   const query = (params.query ?? '').trim().slice(0, DEFAULT_LIMITS.max_query_length)
-  const ranking = params.ranking === 'tfidf' ? 'tfidf' : 'bm25'
+  const ranking = params.ranking === 'tfidf' || params.ranking === 'learned' ? params.ranking : 'bm25'
   const mode = params.mode === 'semantic' || params.mode === 'hybrid' ? params.mode : 'lexical'
   const sort = params.sort === 'filename' || params.sort === 'size' ? params.sort : 'relevance'
   const threshold = typeof params.threshold === 'number' && Number.isFinite(params.threshold)

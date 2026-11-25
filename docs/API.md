@@ -45,7 +45,7 @@ Returns `{"job_id": string, "status": "cancelling"}`.
 Request fields:
 
 - `query`: string, required, max 500 chars.
-- `ranking`: `tfidf` | `bm25`, default `bm25`. `rank` is accepted as an alias.
+- `ranking`: `tfidf` | `bm25` | `learned`, default `bm25`. `rank` is accepted as an alias. `learned` blends normalized BM25, TF-IDF and optional semantic scores using `backend/core/ranker_weights.json`.
 - `mode`: `lexical` | `semantic` | `hybrid`, default `lexical`.
 - `fuzzy`: boolean, default true. Set false for controlled ranking comparisons.
 - `threshold`: number 0–1 applied to the normalized score.

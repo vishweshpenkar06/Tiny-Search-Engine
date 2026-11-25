@@ -1,4 +1,4 @@
-export type RankingMode = 'tfidf' | 'bm25'
+export type RankingMode = 'tfidf' | 'bm25' | 'learned'
 export type RetrievalMode = 'lexical' | 'semantic' | 'hybrid'
 export type SortMode = 'relevance' | 'filename' | 'size'
 

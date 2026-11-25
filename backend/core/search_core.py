@@ -1,8 +1,10 @@
+import json
 import math
 import re
 import time
 from collections import defaultdict
 from dataclasses import dataclass
+from pathlib import Path
 
 from core.analysis import Analyzer, field_boost, search_fields, stem
 from core.models import (
@@ -19,6 +21,31 @@ _TOKEN_RE = re.compile(r"\w+", re.UNICODE)
 _MAX_POSITIONS = 20
 _SNIPPET_TOKENS = 48
 _PHRASE_BONUS = 3.0
+_WEIGHT_PATH = Path(__file__).with_name("ranker_weights.json")
+_DEFAULT_WEIGHTS = {"bm25": 0.34, "tfidf": 0.33, "semantic": 0.33}
+
+
+def learned_weights() -> dict[str, float]:
+    try:
+        raw = json.loads(_WEIGHT_PATH.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return dict(_DEFAULT_WEIGHTS)
+    result = dict(_DEFAULT_WEIGHTS)
+    for key in result:
+        value = raw.get(key)
+        if isinstance(value, (int, float)) and not isinstance(value, bool) and value >= 0:
+            result[key] = float(value)
+    total = sum(result.values())
+    if total <= 0:
+        return dict(_DEFAULT_WEIGHTS)
+    return {key: value / total for key, value in result.items()}
+
+
+def _normalized(scores: dict[str, float]) -> dict[str, float]:
+    maximum = max(scores.values(), default=0.0)
+    if maximum <= 0.0:
+        return {}
+    return {doc_id: value / maximum for doc_id, value in scores.items() if value > 0.0}
 
 
 @dataclass(frozen=True)
@@ -373,6 +400,8 @@ def execute_search(
     started = time.perf_counter()
     mode = str(getattr(options, "mode", "lexical") or "lexical").lower()
     ranking = str(getattr(options, "ranking", "bm25") or "bm25").lower()
+    if ranking not in ("tfidf", "bm25", "learned"):
+        raise ValueError(f"Unsupported ranking: {ranking}")
     if mode not in ("lexical", "semantic", "hybrid"):
         raise ValueError(f"Unsupported search mode: {mode}")
     if mode in ("semantic", "hybrid"):
@@ -401,9 +430,43 @@ def execute_search(
     }
 
     if mode in ("lexical", "hybrid"):
-        scores, components, matched, totals, snippet_positions = _lexical_scores(
-            data, config, analyzer, terms, phrases, ranking
-        )
+        if ranking == "learned":
+            bm_scores, bm_components, bm_matched, bm_totals, bm_snippets = _lexical_scores(
+                data, config, analyzer, terms, phrases, "bm25"
+            )
+            tf_scores, tf_components, tf_matched, tf_totals, _ = _lexical_scores(
+                data, config, analyzer, terms, phrases, "tfidf"
+            )
+            weights = learned_weights()
+            parts = [
+                ("bm25", weights["bm25"], _normalized(bm_scores)),
+                ("tfidf", weights["tfidf"], _normalized(tf_scores)),
+            ]
+            if query_vector is not None and weights["semantic"] > 0.0:
+                semantic_scores, _ = _semantic_scores(data, query_vector)
+                parts.append(("semantic", weights["semantic"], _normalized(semantic_scores)))
+            usable_total = sum(weight for _, weight, values in parts if values)
+            scores = defaultdict(float)
+            components = defaultdict(lambda: defaultdict(float))
+            matched = dict(bm_matched)
+            totals = dict(bm_totals)
+            snippet_positions = dict(bm_snippets)
+            for name, weight, values in parts:
+                if not values or usable_total <= 0.0:
+                    continue
+                scaled_weight = weight / usable_total
+                for doc_id, value in values.items():
+                    scores[doc_id] += scaled_weight * value
+                    components[doc_id][name] += scaled_weight * value
+            for doc_id, positions in tf_matched.items():
+                matched.setdefault(doc_id, set()).update(positions)
+                totals[doc_id] = max(totals.get(doc_id, 0), tf_totals.get(doc_id, 0))
+            scores = dict(scores)
+            components = {key: dict(value) for key, value in components.items()}
+        else:
+            scores, components, matched, totals, snippet_positions = _lexical_scores(
+                data, config, analyzer, terms, phrases, ranking
+            )
 
     facet_ids = {doc_id for doc_id, value in scores.items() if value > 0.0}
     if mode in ("semantic", "hybrid"):
